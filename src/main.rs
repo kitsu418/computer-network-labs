@@ -3,9 +3,9 @@ use libc;
 use std::env;
 use std::mem;
 use tcp_webserver::socket::Socket;
+use tcp_webserver::http::client_handler;
 
 const MAX_QUEUE_LENGTH: i32 = 128;
-const BUFFER_SIZE: usize = 1024;
 
 fn main() -> Result<()> {
     // Get command line arguments
@@ -52,12 +52,11 @@ fn main() -> Result<()> {
             &mut client_address as *mut libc::sockaddr_storage as *mut libc::sockaddr,
             &mut address_len,
         ) {
-            let mut buffer = [0_u8; BUFFER_SIZE];
-            loop {
-                if let Ok(_num_of_bytes) = client_socket.read(&mut buffer) {
-                    let msg = b"hello world!";
-                    client_socket.write(msg)?;
-                } else {
+            match client_handler(client_socket) {
+                // TODO
+                Ok(_) => continue,
+                Err(_) => {
+                    println!("gg");
                     break;
                 }
             }
