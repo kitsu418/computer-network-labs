@@ -1,3 +1,6 @@
+use std::ffi::CStr;
+use std::net::Ipv4Addr;
+
 use crate::fd::FileDescriptor;
 use crate::utils::rv_handler;
 use anyhow::Result;
@@ -41,5 +44,24 @@ impl Socket {
 
     pub fn write(&self, buffer: &[u8]) -> Result<isize> {
         self.0.write(buffer)
+    }
+
+    pub fn print_peer_name(&self) -> Result<()> {
+        unsafe {
+            let mut client_address: libc::sockaddr_in = std::mem::zeroed();
+            let mut client_address_len = std::mem::size_of_val(&client_address);
+            if libc::getpeername(
+                self.raw_fd(),
+                &mut client_address as *mut _ as *mut libc::sockaddr,
+                &mut client_address_len as * mut _ as *mut u32,
+            ) == 0
+            {
+                let client_ip = Ipv4Addr::from(u32::from_be(client_address.sin_addr.s_addr));
+                let client_port = u16::from_be(client_address.sin_port);
+                println!("New client from {}:{}", client_ip, client_port);
+    
+            }
+        }
+        Ok(())
     }
 }

@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 libc = "0.2.148"
 anyhow = "1.0.75"
+http = "0.2.9"

@@ -2,8 +2,9 @@ use anyhow::Result;
 use libc;
 use std::env;
 use std::mem;
-use tcp_webserver::socket::Socket;
+use std::path::PathBuf;
 use tcp_webserver::http::client_handler;
+use tcp_webserver::socket::Socket;
 
 const MAX_QUEUE_LENGTH: i32 = 128;
 
@@ -27,7 +28,7 @@ fn main() -> Result<()> {
         .parse()
         .unwrap_or_else(|_| panic!("Error: invalid port"));
     let port = port.to_be();
-    // let dir_path = &args[3];
+    let root_path: PathBuf = PathBuf::from(&args[3]);
 
     let server_address = libc::sockaddr_in {
         sin_family: libc::AF_INET as u16,
@@ -47,17 +48,17 @@ fn main() -> Result<()> {
 
     loop {
         let mut address_len: u32 = 0;
-        let mut client_address: libc::sockaddr_storage = unsafe { mem::zeroed() };
+        let mut client_address: libc::sockaddr_in = unsafe { mem::zeroed() };
         if let Ok(client_socket) = socket.accept(
-            &mut client_address as *mut libc::sockaddr_storage as *mut libc::sockaddr,
+            &mut client_address as *mut libc::sockaddr_in as *mut libc::sockaddr,
             &mut address_len,
         ) {
-            match client_handler(client_socket) {
+            client_socket.print_peer_name()?;
+            match client_handler(client_socket, &root_path) {
                 // TODO
                 Ok(_) => continue,
-                Err(_) => {
-                    println!("gg");
-                    break;
+                Err(e) => {
+                    println!("{:?}", e);
                 }
             }
         } else {
